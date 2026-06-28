@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="AIDocChat — Upload documents and ask questions answered by AI." />
+<title>AIDocChat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:        #0f1117;
+  --rule:       #e2e6f0;
+  --mist:       #f5f7fb;
+  --white:      #ffffff;
+  --brand:      #3b6ef8;
+  --brand-dark: #2550d6;
+  --brand-pale: #eef2fe;
+  --success:    #16a34a;
+  --success-bg: #f0fdf4;
+  --error:      #dc2626;
+  --error-bg:   #fef2f2;
+  --text-1:     #0f1117;
+  --text-2:     #4b5368;
+  --text-3:     #8691a8;
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-xl:   20px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --shadow-sm: 0 1px 3px rgba(15,17,23,.07), 0 1px 2px rgba(15,17,23,.04);
+  --shadow-md: 0 4px 12px rgba(15,17,23,.09), 0 2px 4px rgba(15,17,23,.05);
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text-1);
+  background: var(--mist);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  background: var(--brand);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-mark svg { width: 20px; height: 20px; fill: var(--white); }
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.4px;
+}
+
+.logo-text span { color: var(--brand); }
+
+.sidebar-section {
+  padding: var(--space-5) var(--space-6);
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--space-3);
+}
+
+.dropzone {
+  border: 1.5px dashed var(--rule);
+  border-radius: var(--r-lg);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  background: var(--mist);
+  position: relative;
+}
+
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: var(--brand);
+  background: var(--brand-pale);
+}
+
+.dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.dropzone-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto var(--space-3);
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.dropzone-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--brand);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dropzone-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: var(--space-1);
+}
+
+.dropzone-sub {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.dropzone-formats {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+.fmt-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+}
+
+.file-card {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--mist);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  margin-top: var(--space-3);
+}
+
+.file-card.visible { display: flex; }
+
+.file-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.file-card-info { flex: 1; min-width: 0; }
+
+.file-card-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-meta {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+}
+
+.btn-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 10px var(--space-4);
+  margin-top: var(--space-3);
+  background: var(--brand);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.btn-upload:hover:not(:disabled) { background: var(--brand-dark); }
+.btn-upload:active:not(:disabled) { transform: scale(0.98); }
+.btn-upload:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-upload svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  margin-top: var(--space-3);
+}
+
+.status-badge.visible { display: flex; }
+.status-badge.ready   { background: var(--success-bg); color: var(--success); }
+.status-badge.error   { background: var(--error-bg);   color: var(--error);   }
+.status-badge.loading { background: var(--brand-pale); color: var(--brand);   }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.sidebar-footer {
+  padding: var(--space-4) var(--space-6);
+  margin-top: auto;
+  border-top: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+
+.info-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.info-line + .info-line { margin-top: var(--space-2); }
+
+.info-line svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.dev-credit {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--mist);
+  overflow: hidden;
+}
+
+.chat-topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--rule);
+  padding: 0 var(--space-6);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.chat-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.chat-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  margin-top: 1px;
+}
+
+.model-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--mist);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.model-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  scroll-behavior: smooth;
+}
+
+.chat-messages::-webkit-scrollbar { width: 5px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  gap: var(--space-4);
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}
+
+.empty-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--brand);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+}
+
+.empty-body {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  max-width: 340px;
+  line-height: 1.7;
+}
+
+.empty-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 380px;
+}
+
+.hint-pill {
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  text-align: left;
+  cursor: default;
+  transition: border-color 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+
+.hint-pill::before { content: '→ '; color: var(--brand); font-weight: 600; }
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  width: 100%;
+}
+
+.msg.user  { align-self: flex-end;  align-items: flex-end;  }
+.msg.ai    { align-self: flex-start; align-items: flex-start; }
+.msg.error { align-self: flex-start; align-items: flex-start; }
+
+.msg-meta {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  margin-bottom: var(--space-1);
+  padding: 0 var(--space-1);
+  font-weight: 500;
+}
+
+.msg-body {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg.user .msg-body {
+  background: var(--brand);
+  color: var(--white);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.msg.ai .msg-body {
+  background: var(--white);
+  color: var(--text-1);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-lg) var(--r-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.msg.ai .msg-body p { margin: 0 0 0.6em; }
+.msg.ai .msg-body p:last-child { margin-bottom: 0; }
+.msg.ai .msg-body ul, .msg.ai .msg-body ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
+.msg.ai .msg-body li { margin-bottom: 0.25em; }
+.msg.ai .msg-body strong { font-weight: 600; }
+.msg.ai .msg-body em { font-style: italic; }
+.msg.ai .msg-body code { background: var(--mist); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; font-size: 0.88em; font-family: ui-monospace, monospace; }
+.msg.ai .msg-body pre { background: var(--ink); color: #e2e8f0; border-radius: var(--r-md); padding: var(--space-4); overflow-x: auto; margin: 0.5em 0; }
+.msg.ai .msg-body pre code { background: none; border: none; padding: 0; color: inherit; font-size: 0.86em; }
+
+.msg.error .msg-body {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid #fecaca;
+  border-radius: var(--r-lg);
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-lg) var(--r-sm);
+  width: fit-content;
+  box-shadow: var(--shadow-sm);
+}
+
+.typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand);
+  opacity: 0.4;
+  animation: typing 1.3s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.18s; }
+.typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0);   opacity: 0.4; }
+  30%           { transform: translateY(-5px); opacity: 1;   }
+}
+
+.chat-input-area {
+  background: var(--white);
+  border-top: 1px solid var(--rule);
+  padding: var(--space-4) var(--space-6);
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  background: var(--mist);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-xl);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(59,110,248,.12);
+}
+
+#question-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text-1);
+  resize: none;
+  line-height: 1.55;
+  min-height: 24px;
+  max-height: 140px;
+  padding: 2px 0;
+}
+
+#question-input::placeholder { color: var(--text-3); }
+#question-input:disabled { cursor: not-allowed; }
+
+.btn-send {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--brand);
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+}
+
+.btn-send:hover:not(:disabled) { background: var(--brand-dark); }
+.btn-send:active:not(:disabled) { transform: scale(0.93); }
+.btn-send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-send svg { width: 16px; height: 16px; fill: var(--white); }
+
+.input-hint {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  text-align: center;
+  margin-top: var(--space-2);
+}
+
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+@media (max-width: 768px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100dvh;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    max-height: 52px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .sidebar.expanded { max-height: 100vh; }
+
+  .sidebar-header {
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebar-toggle { font-size: var(--text-sm); color: var(--brand); font-weight: 600; }
+
+  .chat-messages { padding: var(--space-4); }
+  .chat-input-area { padding: var(--space-3) var(--space-4); }
+  .chat-topbar { padding: 0 var(--space-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <aside class="sidebar" id="sidebar" aria-label="Document upload">
+    <div class="sidebar-header" id="sidebar-header">
+      <a class="logo" href="#" aria-label="AIDocChat home">
+        <div class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <span class="logo-text">AI<span>Doc</span>Chat</span>
+      </a>
+      <span class="sidebar-toggle" id="sidebar-toggle" aria-hidden="true">Upload ↓</span>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-label">Document</p>
+
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload document">
+        <input
+          type="file"
+          id="file-input"
+          accept=".pdf,.txt,.doc,.docx,.md,.csv,.rtf"
+          aria-label="Choose file"
+        />
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+        </div>
+        <p class="dropzone-title">Drop a file or click to browse</p>
+        <p class="dropzone-sub">Supported formats</p>
+        <div class="dropzone-formats" aria-label="Supported file types">
+          <span class="fmt-tag">PDF</span>
+          <span class="fmt-tag">TXT</span>
+          <span class="fmt-tag">DOC</span>
+          <span class="fmt-tag">DOCX</span>
+          <span class="fmt-tag">MD</span>
+          <span class="fmt-tag">CSV</span>
+          <span class="fmt-tag">RTF</span>
+        </div>
+      </div>
+
+      <div class="file-card" id="file-card" aria-live="polite">
+        <div class="file-card-icon" id="file-icon" aria-hidden="true">📄</div>
+        <div class="file-card-info">
+          <div class="file-card-name" id="file-name">—</div>
+          <div class="file-card-meta" id="file-meta">No file selected</div>
+        </div>
+      </div>
+
+      <button class="btn-upload" id="btn-upload" disabled aria-label="Upload and process document">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        Upload document
+      </button>
+
+      <div class="status-badge" id="status-badge" role="status" aria-live="polite">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer" aria-label="App information">
+      <div class="info-line">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Files processed in-memory, not stored
+      </div>
+      <div class="info-line">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Session resets on page reload
+      </div>
+      <p class="dev-credit">Developed by M B K Vamsi Krishna</p>
+    </div>
+  </aside>
+
+  <main class="chat-panel" aria-label="Chat interface">
+    <div class="chat-topbar">
+      <div>
+        <div class="chat-title" id="chat-title">New conversation</div>
+        <div class="chat-subtitle" id="chat-subtitle">Upload a document to begin</div>
+      </div>
+      <div class="model-chip" aria-label="Model status">
+        <div class="model-dot" aria-hidden="true"></div>
+        Gemini 2.5 Flash
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages" role="log" aria-label="Conversation" aria-live="polite">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <h1 class="empty-title">Ask your document anything</h1>
+        <p class="empty-body">Upload a file on the left, then ask questions. AIDocChat retrieves the most relevant passages and answers using AI.</p>
+        <div class="empty-hints" aria-label="Example questions">
+          <div class="hint-pill">Summarize the key points of this document</div>
+          <div class="hint-pill">What are the main conclusions?</div>
+          <div class="hint-pill">Find all mentions of a specific topic</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-wrap">
+        <textarea
+          id="question-input"
+          placeholder="Upload a document to start asking questions…"
+          rows="1"
+          disabled
+          aria-label="Type your question"
+          aria-disabled="true"
+        ></textarea>
+        <button class="btn-send" id="btn-send" disabled aria-label="Send message">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
+      <p class="input-hint">Press Enter to send · Shift+Enter for new line</p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+'use strict';
+
+let sessionId   = null;
+let history     = [];
+let isThinking  = false;
+let selectedFile = null;
+
+const sidebar       = document.getElementById('sidebar');
+const sidebarHeader = document.getElementById('sidebar-header');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const dropzone      = document.getElementById('dropzone');
+const fileInput     = document.getElementById('file-input');
+const fileCard      = document.getElementById('file-card');
+const fileIcon      = document.getElementById('file-icon');
+const fileName      = document.getElementById('file-name');
+const fileMeta      = document.getElementById('file-meta');
+const btnUpload     = document.getElementById('btn-upload');
+const statusBadge   = document.getElementById('status-badge');
+const statusDot     = document.getElementById('status-dot');
+const statusText    = document.getElementById('status-text');
+const chatMessages  = document.getElementById('chat-messages');
+const emptyState    = document.getElementById('empty-state');
+const chatTitle     = document.getElementById('chat-title');
+const chatSubtitle  = document.getElementById('chat-subtitle');
+const questionInput = document.getElementById('question-input');
+const btnSend       = document.getElementById('btn-send');
+
+const FORMAT_ICONS = { pdf:'📕', txt:'📄', doc:'📝', docx:'📝', md:'📋', csv:'📊', rtf:'📄' };
+const ACCEPTED     = ['pdf','txt','doc','docx','md','csv','rtf'];
+
+function formatBytes(bytes) {
+  if (bytes < 1024)           return bytes + ' B';
+  if (bytes < 1024 * 1024)   return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function getExt(name) { return name.split('.').pop().toLowerCase(); }
+
+function showStatus(type, text) {
+  statusBadge.className    = 'status-badge visible ' + type;
+  statusDot.className      = 'status-dot' + (type === 'loading' ? ' pulse' : '');
+  statusText.textContent   = text;
+}
+
+function hideStatus() { statusBadge.className = 'status-badge'; }
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const ext = getExt(file.name);
+  if (!ACCEPTED.includes(ext)) {
+    showStatus('error', 'Unsupported file type. Accepted: PDF, TXT, DOC, DOCX, MD, CSV, RTF.');
+    return;
+  }
+  selectedFile          = file;
+  fileIcon.textContent  = FORMAT_ICONS[ext] || '📄';
+  fileName.textContent  = file.name;
+  fileMeta.textContent  = formatBytes(file.size);
+  fileCard.classList.add('visible');
+  btnUpload.disabled    = false;
+  hideStatus();
+});
+
+dropzone.addEventListener('dragover',  (e) => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', ()  => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  fileInput.files = dt.files;
+  fileInput.dispatchEvent(new Event('change'));
+});
+
+dropzone.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+});
+
+sidebarHeader.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    sidebar.classList.toggle('expanded');
+    sidebarToggle.textContent = sidebar.classList.contains('expanded') ? 'Close ↑' : 'Upload ↓';
+  }
+});
+
+btnUpload.addEventListener('click', handleUpload);
+
+async function handleUpload() {
+  if (!selectedFile) return;
+  showStatus('loading', 'Processing document…');
+  btnUpload.disabled = true;
+
+  if (sessionId) {
+    fetch('/session/' + sessionId, { method: 'DELETE' }).catch(() => {});
+  }
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const res  = await fetch('/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      showStatus('error', data.detail || 'Upload failed. Please try again.');
+      btnUpload.disabled = false;
+      return;
+    }
+    sessionId = data.session_id;
+    history   = [];
+    const shortName = selectedFile.name.length > 28
+      ? selectedFile.name.slice(0, 25) + '…'
+      : selectedFile.name;
+    showStatus('ready', `Ready — ${shortName}`);
+    chatTitle.textContent    = selectedFile.name;
+    chatSubtitle.textContent = 'Document loaded · ask anything';
+    enableChat();
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('expanded');
+      sidebarToggle.textContent = 'Upload ↓';
+    }
+  } catch {
+    showStatus('error', 'Network error. Check your connection and try again.');
+    btnUpload.disabled = false;
+  }
+}
+
+function enableChat() {
+  questionInput.disabled = false;
+  questionInput.setAttribute('aria-disabled', 'false');
+  questionInput.placeholder = 'Ask a question about your document…';
+  btnSend.disabled = false;
+  if (emptyState) emptyState.remove();
+  questionInput.focus();
+}
+
+questionInput.addEventListener('input', () => {
+  questionInput.style.height = 'auto';
+  questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + 'px';
+});
+
+questionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!isThinking) sendMessage();
+  }
+});
+
+btnSend.addEventListener('click', () => { if (!isThinking) sendMessage(); });
+
+async function sendMessage() {
+  const question = questionInput.value.trim();
+  if (!question || !sessionId) return;
+
+  isThinking             = true;
+  questionInput.value    = '';
+  questionInput.style.height = 'auto';
+  questionInput.disabled = true;
+  btnSend.disabled       = true;
+
+  appendMsg('user', question);
+  const typingEl = appendTyping();
+
+  try {
+    const res  = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, history, question })
+    });
+    const data = await res.json();
+    typingEl.remove();
+    if (!res.ok) {
+      appendMsg('error', data.detail || 'Something went wrong. Please try again.');
+    } else {
+      appendMsg('ai', data.answer);
+      history.push({ role: 'user',      content: question    });
+      history.push({ role: 'assistant', content: data.answer });
+    }
+  } catch {
+    typingEl.remove();
+    appendMsg('error', 'Network error — could not reach the server.');
+  }
+
+  isThinking             = false;
+  questionInput.disabled = false;
+  questionInput.setAttribute('aria-disabled', 'false');
+  btnSend.disabled       = false;
+  questionInput.focus();
+}
+
+function appendMsg(role, text) {
+  const now   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const label = role === 'user' ? 'You' : role === 'ai' ? 'AIDocChat' : 'Error';
+
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+
+  const meta = document.createElement('div');
+  meta.className   = 'msg-meta';
+  meta.textContent = `${label} · ${now}`;
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+  if (role === 'ai' && typeof marked !== 'undefined') {
+    body.innerHTML = marked.parse(text);
+  } else {
+    body.textContent = text;
+  }
+
+  wrap.appendChild(meta);
+  wrap.appendChild(body);
+  chatMessages.appendChild(wrap);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return wrap;
+}
+
+function appendTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.setAttribute('aria-label', 'AIDocChat is thinking');
+
+  const meta = document.createElement('div');
+  meta.className   = 'msg-meta';
+  meta.textContent = 'AIDocChat';
+
+  const ind = document.createElement('div');
+  ind.className = 'typing-indicator';
+  ind.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'typing-dot';
+    ind.appendChild(d);
+  }
+
+  wrap.appendChild(meta);
+  wrap.appendChild(ind);
+  chatMessages.appendChild(wrap);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return wrap;
+}
+</script>
+</body>
+</html>
